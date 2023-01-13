@@ -1,0 +1,351 @@
+---
+title: "El Mundo de Harry Potter"
+author: Raphaëlle Bastien 
+date: 2022-12-23
+categories: [trabajo BigData individual] 
+title-block-banner: true #- {true, false }
+title-block-banner-color: "Black" #-"White"
+toc: true
+toc-location: left
+toc-depth: 3
+smooth-scroll: true
+format: 
+  html: 
+    mainfont: serif
+    backgroundcolor: "#edf9fc"
+    #embed-resources: true
+    link-external-newwindow: true
+    css: ./assets/my_css_file.css   #- CUIDADO!!!!
+code-tools: true
+code-link: true
+---
+
+
+------------------------------------------------------------------------
+
+### 1. INTRUDCCIÓN {style="color: blue"}
+
+Elegí el tema de Harry Potter por dos razones: Soy un gran fan de la franquicia y, en segundo lugar, no quería hacer un tema económico. Quería hacer un trabajo que me representara.
+
+Aquí compararé principalmente las películas y los libros, pero también hablaré de todo lo relacionado con el "Wizarding World" de Harry Potter.
+
+------------------------------------------------------------------------
+
+### 2. Los códigos y los datos {style="color: blue"}
+
+## Los códigos
+
+::: panel-tabset
+
+```{r}
+#| code-fold: true
+# Ejecutamos los paquetes utilizados
+library(tidyr)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(gganimate)
+library(magick)
+library(gt)
+library(ggthemes)
+library(readxl)
+library(gapminder)
+library(pxR)
+library(ggbump)
+library(sf)
+library(naniar)
+library(ggrepel)
+library(patchwork)
+library(vembedr)
+library(dplyr)
+library(conflicted)
+
+
+conflict_prefer("filter","dplyr")
+conflict_prefer("mutate","dplyr")
+conflict_prefer("rename","dplyr")
+conflict_prefer("arrange","dplyr")
+conflict_prefer("count", "dplyr")
+
+```
+
+
+## Los datos
+
+
+```{r}
+#| code-fold: true
+# Los conjuros
+
+Spells_copie <- read_excel("Spells copie.xlsx")
+spells_charm <- Spells_copie %>% filter (Type == "Charm")
+spells_Dark_Arts<- Spells_copie %>% filter(Type== "Dark Arts")
+spells_Healing_spell <- Spells_copie %>% filter(Type== "Healing spell")
+spells_Conjuration <- Spells_copie %>% filter (Type== "Conjuration")   
+spells_Hex <- Spells_copie %>% filter(Type=="Hex")
+spells_transfiguration <- Spells_copie %>% filter(Type=="Transfiguration")
+spells_curse <- Spells_copie %>% filter(Type=="Curse")
+Spells_Jinx <- Spells_copie %>% filter(Type=="Jinx")
+
+# las casas en Hogwarts
+
+Hogwarts <- image_read("./imagenes/Hogwarts.png")
+grif<- image_read("./imagenes/grif.png")  
+huf<- image_read("./imagenes/huf.png") 
+serd <- image_read("./imagenes/serp.png") 
+serp <- image_read("./imagenes/serp.png")
+
+titulo <- c(Hogwarts,grif, huf, serd, serp)
+
+# Los personajes 
+Characters <- read_excel("Characters.xlsx")
+Characters_1 <- Characters %>% filter( House== "Gryffindor")
+Characters_2 <- Characters %>% filter( House== "Ravenclaw")
+Characters_3<- Characters %>% filter( House== "Slytherin")
+Characters_4 <- Characters %>% filter (House =="Hufflepuff")
+Characters_house <- full_join(Characters_1, Characters_2)
+Characters_house <- full_join(Characters_house, Characters_3)
+Characters_house <- full_join(Characters_house, Characters_4)
+rm(Characters_1, Characters_2, Characters_3, Characters_4)
+
+# Las Casas 
+Characters_house <- Characters_house %>% 
+  group_by(House) %>%
+  count() %>% 
+  ungroup() %>% 
+  mutate(perc = `n` / sum(`n`)) %>% 
+  arrange(perc) %>%
+  mutate(labels = scales::percent(perc))
+
+Grafico3 <- ggplot(Characters_house ,aes(x = labels , y = perc , fill = House)) +
+  geom_col() + 
+  coord_polar(theta = "x")
+
+## Libros 
+books_<- read_excel("books .xlsx", col_types = c("text", 
+                                                  "numeric", "numeric", "numeric"))
+
+Grafico1 <- ggplot(books_, aes(x=Book_year_release, y=Book_sold, fill= Title)) +
+  labs(title = "Gráfico 1: Número de libros vendidos en millones de ejemplares  " ,
+       subtitle = " Periodo 1997-2021",
+       caption  = "Fuente: Statitas") +
+  geom_bar(stat = "identity")+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1,
+                                   vjust = 0.5))
+
+## Peli
+Movies_copie2 <- read_excel("Movies_copie2.xlsx", 
+    col_types = c("text", "numeric", "numeric", 
+        "numeric"))
+
+
+grafico_Budget_movie <- ggplot(Movies_copie2, aes(x= `Release Year`, y=`Budget Millions of dollars`, fill=`Movie Title` )) +
+  labs(title = "Gráfico 2: Los presupuestos e ingresos de las 8 películas" ,
+       caption  = "Fuente: Kaggle") +
+  geom_bar(stat = "identity")+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1,
+                                   vjust = 0.5))
+
+
+
+grafico_Box_Office <- ggplot(Movies_copie2, aes(x= `Release Year`, y=`Box Office Millions of dollars`, fill=`Movie Title` )) +
+  labs(title = "Gráfico 2: Los presupuestos e ingresos de las 8 películas" ,
+       caption  = "Fuente: Kaggle") +
+  geom_bar(stat = "identity")+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1,
+                                   vjust = 0.5))
+
+```
+
+:::
+
+## 3. El mundo de Harry Potter
+
+### a. Las casas en Hogwarts
+
+
+```{r}
+#| code-fold: true
+Hogwarts <- image_read("./imagenes/Hogwarts.png")
+grif<- image_read("./imagenes/grif.png")  
+huf<- image_read("./imagenes/huf.png") 
+serd <- image_read("./imagenes/serp.png") 
+serp <- image_read("./imagenes/serp.png")
+
+titulo <- c(Hogwarts,grif, huf, serd, serp)
+
+image_animate(image_scale(titulo), fps = 0.5)
+
+```
+
+
+### b. Los Conjuros principales en los libros y en las películas
+
+::: panel-tabset
+# Maldición
+
+
+```{r}
+#| code-fold: true
+# Maldición
+DT::datatable(spells_curse, 
+              caption = "Los conjuros de maldición",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+```
+
+
+# Encanto
+
+
+```{r}
+#| code-fold: true
+# Encanto 
+ DT::datatable(spells_charm, 
+              caption = "Los conjuros de encanto",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+```
+
+
+# Curar
+
+
+```{r}
+#| code-fold: true
+# Curar 
+DT::datatable(spells_Healing_spell, 
+              caption = "Los conjuros de curar",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+
+```
+
+
+# Conjuración
+
+
+```{r}
+#| code-fold: true
+# Conjuración
+DT::datatable(spells_Conjuration, 
+              caption = "Los conjuros de Conjuración",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+```
+
+
+# Transfiguración
+
+
+```{r}
+#| code-fold: true
+DT::datatable(spells_transfiguration, 
+              caption = "Los conjuros de Transfiguración",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+```
+
+
+# Artes Oscuras
+
+
+```{r}
+#| code-fold: true
+# Artes Oscuras
+DT::datatable(spells_Dark_Arts, 
+              caption = "Los conjuros de artes oscuras",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+```
+
+
+# Artes Oscuras:Hex
+
+
+```{r}
+#| code-fold: true
+DT::datatable(spells_Hex, 
+              caption = "Los conjuros de artes oscuras: Hex",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+
+```
+
+
+# Artes Oscuras: Jinx
+
+
+```{r}
+#| code-fold: true
+DT::datatable(spells_Hex, 
+              caption = "Los conjuros de artes oscuras: Jinx",
+              options = list(pageLength = 4, autoWidth = TRUE ))
+```
+
+:::
+
+### b. Los lugares
+
+## 4. Los libros y las peliculas
+
+### a. ¿Cuántos libros se vendieron?
+
+
+```{r}
+Grafico1 <- ggplot(books_, aes(x=Book_year_release, y=Book_sold, fill= Title)) +
+  labs(title = "Gráfico 1: Número de libros vendidos en millones de ejemplares " ,
+       subtitle = " Periodo 1997-2021",
+       caption  = "Fuente: Statitas") +
+  geom_bar(stat = "identity")+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1,
+                                   vjust = 0.5))
+Grafico1
+
+```
+
+
+### b. Los presupuestos e ingresos de las 8 películas
+
+![Carteles de cine](harry-potter-movies.png)
+
+::: panel-tabset
+### Los presupuestos
+
+
+```{r}
+## Los presupuestos 
+
+grafico_Budget_movie<- ggplot(Movies_copie2, aes(x= `Release Year`, y=`Budget Millions of dollars`, fill=`Movie Title` )) +
+  labs(title = "Gráfico 2: Los presupuestos e ingresos de las 8 películas" ,
+       caption  = "Fuente: Kaggle") +
+  geom_bar(stat = "identity")+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1,
+                                   vjust = 0.5))
+
+
+grafico_Budget_movie
+```
+
+
+### Los Ingresos
+
+
+```{r}
+# Los Ingresos 
+grafico_Box_Office <- ggplot(Movies_copie2, aes(x= `Release Year`, y=`Box Office Millions of dollars`, fill=`Movie Title` )) +
+  labs(title = "Gráfico 2: Los presupuestos e ingresos de las 8 películas" ,
+       caption  = "Fuente: Kaggle") +
+  geom_bar(stat = "identity")+
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90,
+                                   hjust = 1,
+                                   vjust = 0.5))
+grafico_Box_Office
+```
+
+:::
+
